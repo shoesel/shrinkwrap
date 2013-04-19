@@ -73,6 +73,29 @@ public class ExplodedImporterTestCase {
         Assert.assertTrue("Could not create the parent empty directory", parentEmpty.mkdirs());
         parentEmpty.deleteOnExit();
         empty.deleteOnExit();
+       
+        final File badNamedExlodedImportTest = new File(root, "folder (1)/" + EXISTING_DIRECTORY_RESOURCE);
+        Assert.assertTrue("Import test folder does not exist: " + badNamedExlodedImportTest.getAbsolutePath(),
+        		badNamedExlodedImportTest.exists());
+        final File emptyBadNamedExplodedImport = new File(badNamedExlodedImportTest, EMPTY_DIR_NAME);
+        Assert.assertTrue("Could not create the empty directory", emptyBadNamedExplodedImport.mkdir());
+        final File parentBadNamedExplodedImport = new File(badNamedExlodedImportTest, PARENT_DIR_NAME);
+        final File parentEmptyBadNamedExplodedImport = new File(parentBadNamedExplodedImport, EMPTY_DIR_NAME);
+        Assert.assertTrue("Could not create the parent empty directory", parentEmptyBadNamedExplodedImport.mkdirs());
+        parentEmptyBadNamedExplodedImport.deleteOnExit();
+        emptyBadNamedExplodedImport.deleteOnExit();
+        
+        
+        final File namedExlodedImportTest = new File(root, "folder/" + EXISTING_DIRECTORY_RESOURCE);
+        Assert.assertTrue("Import test folder does not exist: " + namedExlodedImportTest.getAbsolutePath(),
+        		namedExlodedImportTest.exists());
+        final File emptyNamedExplodedImport = new File(namedExlodedImportTest, EMPTY_DIR_NAME);
+        Assert.assertTrue("Could not create the empty directory", emptyNamedExplodedImport.mkdir());
+        final File parentNamedExplodedImport = new File(namedExlodedImportTest, PARENT_DIR_NAME);
+        final File parentEmptyNamedExplodedImport = new File(parentNamedExplodedImport, EMPTY_DIR_NAME);
+        Assert.assertTrue("Could not create the parent empty directory", parentEmptyNamedExplodedImport.mkdirs());
+        parentEmptyNamedExplodedImport.deleteOnExit();
+        emptyNamedExplodedImport.deleteOnExit();
     }
 
     @Test
@@ -141,6 +164,48 @@ public class ExplodedImporterTestCase {
         ExplodedImporter explodedImporter = ShrinkWrap.create(ExplodedImporter.class);
         String explodedImporterArchiveName = explodedImporter.as(JavaArchive.class).getName();
         Assert.assertFalse(explodedImporterArchiveName.contains("."));
+    }
+    
+    @Test //SHRINKWRAP-453
+    public void shouldHandleBadNamedSourcePathsProperly() throws IllegalArgumentException, URISyntaxException{
+    	Archive<?> archive = ShrinkWrap
+                .create(ExplodedImporter.class, "test.jar")
+                .importDirectory(
+                    SecurityActions.getThreadContextClassLoader().getResource("folder (1)/" + EXISTING_DIRECTORY_RESOURCE).toURI()
+                        .getPath()).as(JavaArchive.class);
+    	Logger.getLogger(ExplodedImporterTestCase.class.getName()).info(archive.toString(true));
+        Assert.assertTrue("Root files should be imported", archive.contains(new BasicPath("/Test.properties")));
+
+        Assert.assertTrue("Nested files should be imported", archive.contains(new BasicPath("/META-INF/MANIFEST.FM")));
+
+        Assert.assertTrue("Nested files should be imported",
+            archive.contains(new BasicPath("/org/jboss/Test.properties")));
+
+        Assert.assertTrue("Empty directories should be imported", archive.contains(new BasicPath("/empty_dir")));
+
+        Assert.assertTrue("Nested empty directories should be imported",
+            archive.contains(new BasicPath("/parent/empty_dir")));
+    }
+    
+    @Test //SHRINKWRAP-453
+    public void shouldHandleNamedSourcePathsProperly() throws IllegalArgumentException, URISyntaxException{
+    	Archive<?> archive = ShrinkWrap
+                .create(ExplodedImporter.class, "test.jar")
+                .importDirectory(
+                    SecurityActions.getThreadContextClassLoader().getResource("folder/" + EXISTING_DIRECTORY_RESOURCE).toURI()
+                        .getPath()).as(JavaArchive.class);
+    	Logger.getLogger(ExplodedImporterTestCase.class.getName()).info(archive.toString(true));
+        Assert.assertTrue("Root files should be imported", archive.contains(new BasicPath("/Test.properties")));
+
+        Assert.assertTrue("Nested files should be imported", archive.contains(new BasicPath("/META-INF/MANIFEST.FM")));
+
+        Assert.assertTrue("Nested files should be imported",
+            archive.contains(new BasicPath("/org/jboss/Test.properties")));
+
+        Assert.assertTrue("Empty directories should be imported", archive.contains(new BasicPath("/empty_dir")));
+
+        Assert.assertTrue("Nested empty directories should be imported",
+            archive.contains(new BasicPath("/parent/empty_dir")));
     }
     
 }
